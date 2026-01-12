@@ -1,6 +1,6 @@
-use sqlx::pool;
+use sqlx::PgPool;
 
-use crate::app_error::AppError
+use crate::adapters::http::app_error_impl::AppError;
 
 #[derive(Clone)]
 pub struct PostgresPresistence {

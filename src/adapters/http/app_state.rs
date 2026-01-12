@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::exttract::FromRef;
+use axum::extract::FromRef;
 
 use crate::{infra::config::AppConfig};
 
@@ -10,7 +10,7 @@ pub struct AppState {
 }
 
 impl FromRef<AppState> for AppConfig {
-    fn from_ref(app_state: &AppState) -> self {
+    fn from_ref(app_state: &AppState) -> Self {
         app_state.config.clone()
     }
 }

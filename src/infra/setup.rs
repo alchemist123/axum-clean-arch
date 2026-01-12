@@ -6,15 +6,15 @@ use std::fs::File;
 use std::sync::Arc;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-pub async fn init_tracing() -> anyhow::Result<Arc<AppState> {
+pub async fn init_app_state() -> anyhow::Result<Arc<AppState>>{
     let config = AppConfig::from_env();
 
     Ok(AppState{
-        config Arc::new(config)
+        config: Arc::new(config)
     })
 }
 
-pub fun init_tracing(){
+pub fn init_tracing() -> anyhow::Result<()> {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     
     let console_layer = fmt::layer().with_target(false)
@@ -27,7 +27,7 @@ pub fun init_tracing(){
     .json()
     .with_writer(file)
     .with_current_span(true)
-    .with_span_list(true)
+    .with_span_list(true);
 
     tracing_subscriber::registry()
     .with(filter)

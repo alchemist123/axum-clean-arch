@@ -1,4 +1,4 @@
-use crate::app_error:AppError;
+use crate::app_error::AppError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -13,4 +13,5 @@ impl IntoResponse for AppError {
             AppError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response(),
             AppError::InternalError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
         }
+    }
 }
