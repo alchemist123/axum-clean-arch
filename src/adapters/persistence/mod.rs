@@ -1,9 +1,10 @@
 use sqlx::PgPool;
 
-use crate::adapters::http::app_error_impl::AppError;
+use crate::app_error::AppError;
 
 #[derive(Clone)]
 pub struct PostgresPresistence {
+    #[allow(dead_code)]
     pool: PgPool,
 }
 

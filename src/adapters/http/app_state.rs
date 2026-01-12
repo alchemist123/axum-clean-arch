@@ -11,6 +11,6 @@ pub struct AppState {
 
 impl FromRef<AppState> for AppConfig {
     fn from_ref(app_state: &AppState) -> Self {
-        app_state.config.clone()
+        app_state.config.as_ref().clone()
     }
 }

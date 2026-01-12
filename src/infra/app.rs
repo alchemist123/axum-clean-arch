@@ -1,5 +1,5 @@
 use axum::{Router, http};
-use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http::{header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}, Method};
 use tower_http::{cors::{CorsLayer, AllowOrigin, AllowMethods, AllowHeaders}, trace::TraceLayer};
 use uuid::Uuid;
 
@@ -9,15 +9,31 @@ use crate::{
 };
 
 pub fn create_app(app_state: AppState) -> Router {
-    init_tracing();
+    init_tracing().expect("Failed to initialize tracing");
 
     let cors = CorsLayer::new()
-        .allow_origin(AllowOrigin::any())
-        .allow_methods(AllowMethods::any())
-        .allow_headers(AllowHeaders::any())
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://localhost:5173".parse().unwrap(), // Vite default
+            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://127.0.0.1:5173".parse().unwrap(),
+        ]))
+        .allow_methods(AllowMethods::list([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::PATCH,
+            Method::OPTIONS,
+        ]))
+        .allow_headers(AllowHeaders::list([
+            AUTHORIZATION,
+            CONTENT_TYPE,
+            ACCEPT,
+        ]))
         .allow_credentials(true);
 
-    Router::new().nest("/api/v1", adapters::http::routes::router())
+    Router::new().nest("/api/v1", adapters::routes::router())
     .with_state(app_state)
     .layer(cors)
     .layer(

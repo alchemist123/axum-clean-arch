@@ -2,16 +2,16 @@ use crate::{
     adapters::http::app_state::AppState,
     infra::config::AppConfig,
 };
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use std::sync::Arc;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub async fn init_app_state() -> anyhow::Result<Arc<AppState>>{
     let config = AppConfig::from_env();
 
-    Ok(AppState{
+    Ok(Arc::new(AppState{
         config: Arc::new(config)
-    })
+    }))
 }
 
 pub fn init_tracing() -> anyhow::Result<()> {
@@ -21,7 +21,8 @@ pub fn init_tracing() -> anyhow::Result<()> {
     .with_level(true)
     .pretty();
 
-    let file = file::create("logs/app.log").unwrap().expect("Failed to create log file");
+    create_dir_all("logs").map_err(|e| anyhow::anyhow!("Failed to create logs directory: {}", e))?;
+    let file = File::create("logs/app.log").map_err(|e| anyhow::anyhow!("Failed to create log file: {}", e))?;
 
     let json_layer = fmt::layer()
     .json()
