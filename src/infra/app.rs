@@ -14,7 +14,7 @@ pub fn create_app(app_state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
             "http://localhost:3000".parse().unwrap(),
-            "http://localhost:5173".parse().unwrap(), // Vite default
+            "http://localhost:5173".parse().unwrap(),
             "http://127.0.0.1:3000".parse().unwrap(),
             "http://127.0.0.1:5173".parse().unwrap(),
         ]))
