@@ -4,4 +4,3 @@ pub enum AppError {
     InvalidCredentials,
     InternalError(String),
 }
-
