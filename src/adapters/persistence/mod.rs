@@ -1,3 +1,5 @@
+pub mod team_repository;
+
 use sqlx::PgPool;
 
 use crate::app_error::AppError;

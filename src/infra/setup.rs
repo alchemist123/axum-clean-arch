@@ -1,6 +1,9 @@
 use crate::{
-    adapters::http::app_state::AppState,
-    infra::config::AppConfig,
+    adapters::{
+        http::app_state::AppState,
+        persistence::team_repository::PostgresTeamRepository,
+    },
+    infra::{config::AppConfig, db::init_db},
 };
 use std::fs::{File, create_dir_all};
 use std::sync::Arc;
@@ -8,10 +11,20 @@ use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberI
 
 pub async fn init_app_state() -> anyhow::Result<Arc<AppState>>{
     let config = AppConfig::from_env();
+    let pool = init_db().await?;
+    
+    // Run migrations
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
+    
+    let team_repository: Arc<PostgresTeamRepository> = Arc::new(PostgresTeamRepository::new(pool));
 
-    Ok(Arc::new(AppState{
-        config: Arc::new(config)
-    }))
+    Ok(Arc::new(AppState::new(
+        Arc::new(config),
+        team_repository as Arc<dyn crate::domain::repository::TeamRepository + Send + Sync>,
+    )))
 }
 
 pub fn init_tracing() -> anyhow::Result<()> {
