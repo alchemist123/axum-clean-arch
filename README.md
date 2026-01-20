@@ -9,8 +9,8 @@ This project follows **Clean Architecture** (Bob Uncle's style) with the followi
 - **Domain**: Core business entities and repository traits
 - **Application**: Use cases (business logic)
 - **Adapters**: 
-  - **Persistence**: Repository implementations (SQLx with PostgreSQL)
-  - **Routes**: HTTP handlers (Axum)
+- **Persistence**: Repository implementations (SQLx with PostgreSQL)
+- **Routes**: HTTP handlers (Axum)
 
 ## Prerequisites
 
