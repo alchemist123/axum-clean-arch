@@ -10,8 +10,10 @@ async fn main() -> anyhow::Result<()> {
     let app_state = init_app_state().await?;
 
     let app = create_app((*app_state).clone());
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
-    info!("Starting server on port 3000");
+    // Bind to 0.0.0.0 to allow connections from outside the container (Docker)
+    let bind_address = std::env::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:3000".to_string());
+    let listener = tokio::net::TcpListener::bind(&bind_address).await.unwrap();
+    info!("Starting server on {}", bind_address);
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }

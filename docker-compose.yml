@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hackathon-postgres
+    environment:
+      POSTGRES_USER: hackathon_user
+      POSTGRES_PASSWORD: hackathon_password
+      POSTGRES_DB: hackathon_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackathon_user -d hackathon_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hackathon-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hackathon-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://hackathon_user:hackathon_password@postgres:5432/hackathon_db
+      JWT_SECRET: your-secret-key-change-in-production
+      ACCESS_TOKEN_TTL_SEC: 3600
+      REFRESH_TOKEN_TTL_DAYS: 7
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - hackathon-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  hackathon-network:
+    driver: bridge
+

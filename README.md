@@ -62,6 +62,79 @@ cargo run
 
 The server will start on `http://127.0.0.1:3000`
 
+## Docker Setup
+
+### Quick Start with Docker Compose
+
+The easiest way to run the entire application (including PostgreSQL) is using Docker Compose:
+
+```bash
+# Build and start all services (app + database)
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f app
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (clears database data)
+docker-compose down -v
+```
+
+The API will be available at `http://localhost:3000` and PostgreSQL at `localhost:5432`.
+
+### Docker Compose Services
+
+- **postgres**: PostgreSQL 16 database
+- **app**: Axum API server
+
+### Environment Variables for Docker
+
+The `docker-compose.yml` file includes default environment variables. To customize them, you can:
+
+1. Edit the `docker-compose.yml` file directly, or
+2. Create a `.env` file (Docker Compose will automatically use it)
+
+### Building Docker Image Only
+
+If you want to build just the Docker image without docker-compose:
+
+```bash
+# Build the image
+docker build -t hackathon-api .
+
+# Run the container (requires external PostgreSQL)
+docker run -p 3000:3000 \
+  -e DATABASE_URL=postgresql://user:pass@host:5432/db \
+  -e JWT_SECRET=your-secret \
+  -e ACCESS_TOKEN_TTL_SEC=3600 \
+  -e REFRESH_TOKEN_TTL_DAYS=7 \
+  hackathon-api
+```
+
+### Docker Commands Reference
+
+```bash
+# Rebuild only the app (faster if only code changed)
+docker-compose build app
+
+# Restart just the app service
+docker-compose restart app
+
+# View app logs
+docker-compose logs app
+
+# Execute commands in the app container
+docker-compose exec app /bin/bash
+
+# Check service status
+docker-compose ps
+```
+
 ## API Endpoints
 
 ### Base URL

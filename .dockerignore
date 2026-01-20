@@ -1,0 +1,14 @@
+target/
+.git/
+.gitignore
+.env
+.env.local
+*.log
+logs/
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
