@@ -7,7 +7,8 @@ use crate::{
         repository::TeamRepository,
         team::{
             Team, RegisterTeamRequest, TeamResponse, ListTeamsQuery, 
-            PaginatedTeamsResponse, CheckMemberRequest, CheckMemberResponse, TeamCountResponse
+            PaginatedTeamsResponse, CheckMemberRequest, CheckMemberResponse, TeamCountResponse,
+            TeamStatus
         },
     },
 };
@@ -94,6 +95,8 @@ impl TeamUseCase {
                 .collect(),
             created_at: None,
             updated_at: None,
+            status: TeamStatus::Pending,
+            admin_remarks: None,
         };
 
         // Validate team structure

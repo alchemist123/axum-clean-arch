@@ -13,6 +13,33 @@ pub struct TeamMember {
     pub team_id: Option<Uuid>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TeamStatus {
+    Pending,
+    Approved,
+    Rejected,
+}
+
+impl From<String> for TeamStatus {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "Approved" => TeamStatus::Approved,
+            "Rejected" => TeamStatus::Rejected,
+            _ => TeamStatus::Pending,
+        }
+    }
+}
+
+impl Into<String> for TeamStatus {
+    fn into(self) -> String {
+        match self {
+            TeamStatus::Approved => "Approved".to_string(),
+            TeamStatus::Rejected => "Rejected".to_string(),
+            TeamStatus::Pending => "Pending".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct Team {
     pub id: Option<Uuid>,
@@ -22,6 +49,8 @@ pub struct Team {
     pub idea_description: String,
     #[validate(length(max = 500, message = "Impact description must be at most 500 characters"))]
     pub impact_description: String,
+    pub status: TeamStatus,
+    pub admin_remarks: Option<String>,
     pub members: Vec<TeamMember>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -80,6 +109,8 @@ pub struct TeamResponse {
     pub team_name: String,
     pub idea_description: String,
     pub impact_description: String,
+    pub status: TeamStatus,
+    pub admin_remarks: Option<String>,
     pub members: Vec<TeamMemberResponse>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

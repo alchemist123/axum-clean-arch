@@ -28,14 +28,15 @@ impl TeamRepository for PostgresTeamRepository {
         // Insert team
         let team_id = sqlx::query_scalar::<_, Uuid>(
             r#"
-            INSERT INTO teams (team_name, idea_description, impact_description)
-            VALUES ($1, $2, $3)
+            INSERT INTO teams (team_name, idea_description, impact_description, status)
+            VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
         )
         .bind(&team.team_name)
         .bind(&team.idea_description)
         .bind(&team.impact_description)
+        .bind::<String>(team.status.clone().into())
         .fetch_one(&mut *tx)
         .await
         .map_err(|e| e.to_string())?;
@@ -71,9 +72,9 @@ impl TeamRepository for PostgresTeamRepository {
         tx.commit().await.map_err(|e| e.to_string())?;
 
         // Fetch the created team with timestamps
-        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
             r#"
-            SELECT id, team_name, idea_description, impact_description, created_at, updated_at
+            SELECT id, team_name, idea_description, impact_description, status, admin_remarks, created_at, updated_at
             FROM teams
             WHERE id = $1
             "#,
@@ -88,16 +89,18 @@ impl TeamRepository for PostgresTeamRepository {
             team_name: team_row.1,
             idea_description: team_row.2,
             impact_description: team_row.3,
+            status: team_row.4.into(),
+            admin_remarks: team_row.5,
             members,
-            created_at: team_row.4,
-            updated_at: team_row.5,
+            created_at: team_row.6,
+            updated_at: team_row.7,
         })
     }
 
     async fn get_team_by_id(&self, id: Uuid) -> Result<Option<TeamResponse>, String> {
-        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
             r#"
-            SELECT id, team_name, idea_description, impact_description, created_at, updated_at
+            SELECT id, team_name, idea_description, impact_description, status, admin_remarks, created_at, updated_at
             FROM teams
             WHERE id = $1
             "#,
@@ -135,9 +138,11 @@ impl TeamRepository for PostgresTeamRepository {
                 team_name: team_row.1,
                 idea_description: team_row.2,
                 impact_description: team_row.3,
+                status: team_row.4.into(),
+                admin_remarks: team_row.5,
                 members,
-                created_at: team_row.4,
-                updated_at: team_row.5,
+                created_at: team_row.6,
+                updated_at: team_row.7,
             }))
         } else {
             Ok(None)
@@ -145,9 +150,9 @@ impl TeamRepository for PostgresTeamRepository {
     }
 
     async fn get_team_by_name(&self, name: &str) -> Result<Option<TeamResponse>, String> {
-        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+        let team_row = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
             r#"
-            SELECT id, team_name, idea_description, impact_description, created_at, updated_at
+            SELECT id, team_name, idea_description, impact_description, status, admin_remarks, created_at, updated_at
             FROM teams
             WHERE team_name = $1
             "#,
@@ -185,9 +190,11 @@ impl TeamRepository for PostgresTeamRepository {
                 team_name: team_row.1,
                 idea_description: team_row.2,
                 impact_description: team_row.3,
+                status: team_row.4.into(),
+                admin_remarks: team_row.5,
                 members,
-                created_at: team_row.4,
-                updated_at: team_row.5,
+                created_at: team_row.6,
+                updated_at: team_row.7,
             }))
         } else {
             Ok(None)
@@ -200,7 +207,7 @@ impl TeamRepository for PostgresTeamRepository {
         let offset = (page - 1) * page_size;
 
         // Build query based on filters
-        let (total, teams) = match (&query.search, &query.team_name) {
+        let (total, teams_rows) = match (&query.search, &query.team_name) {
             (Some(search), Some(team_name)) if !search.is_empty() && !team_name.is_empty() => {
                 let search_pattern = format!("%{}%", search);
                 let team_name_pattern = format!("%{}%", team_name);
@@ -219,9 +226,9 @@ impl TeamRepository for PostgresTeamRepository {
                 .await
                 .map_err(|e| e.to_string())?;
 
-                let teams = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+                let teams = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
                     r#"
-                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.created_at, t.updated_at
+                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.status, t.admin_remarks, t.created_at, t.updated_at
                     FROM teams t
                     WHERE (t.team_name ILIKE $1 OR t.idea_description ILIKE $1 OR t.impact_description ILIKE $1)
                     AND t.team_name ILIKE $2
@@ -254,9 +261,9 @@ impl TeamRepository for PostgresTeamRepository {
                 .await
                 .map_err(|e| e.to_string())?;
 
-                let teams = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+                let teams = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
                     r#"
-                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.created_at, t.updated_at
+                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.status, t.admin_remarks, t.created_at, t.updated_at
                     FROM teams t
                     WHERE t.team_name ILIKE $1 OR t.idea_description ILIKE $1 OR t.impact_description ILIKE $1
                     ORDER BY t.created_at DESC
@@ -287,9 +294,9 @@ impl TeamRepository for PostgresTeamRepository {
                 .await
                 .map_err(|e| e.to_string())?;
 
-                let teams = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+                let teams = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
                     r#"
-                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.created_at, t.updated_at
+                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.status, t.admin_remarks, t.created_at, t.updated_at
                     FROM teams t
                     WHERE t.team_name ILIKE $1
                     ORDER BY t.created_at DESC
@@ -311,9 +318,9 @@ impl TeamRepository for PostgresTeamRepository {
                     .await
                     .map_err(|e| e.to_string())?;
 
-                let teams = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+                let teams = sqlx::query_as::<_, (Uuid, String, String, String, String, Option<String>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
                     r#"
-                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.created_at, t.updated_at
+                    SELECT t.id, t.team_name, t.idea_description, t.impact_description, t.status, t.admin_remarks, t.created_at, t.updated_at
                     FROM teams t
                     ORDER BY t.created_at DESC
                     LIMIT $1 OFFSET $2
@@ -331,7 +338,7 @@ impl TeamRepository for PostgresTeamRepository {
 
         // Fetch members for each team
         let mut team_responses = Vec::new();
-        for team_row in teams {
+        for team_row in teams_rows {
             let members = sqlx::query_as::<_, (Uuid, String, String, String, bool)>(
                 r#"
                 SELECT id, name, tms_id, email, is_team_lead
@@ -359,9 +366,11 @@ impl TeamRepository for PostgresTeamRepository {
                 team_name: team_row.1,
                 idea_description: team_row.2,
                 impact_description: team_row.3,
+                status: team_row.4.into(),
+                admin_remarks: team_row.5,
                 members,
-                created_at: team_row.4,
-                updated_at: team_row.5,
+                created_at: team_row.6,
+                updated_at: team_row.7,
             });
         }
 
@@ -448,6 +457,24 @@ impl TeamRepository for PostgresTeamRepository {
         .map_err(|e| e.to_string())?;
 
         Ok(count > 0)
+    }
+
+    async fn update_team_status(&self, id: Uuid, status: String, remarks: Option<String>) -> Result<(), String> {
+        sqlx::query(
+            r#"
+            UPDATE teams
+            SET status = $1, admin_remarks = $2, updated_at = NOW()
+            WHERE id = $3
+            "#,
+        )
+        .bind(status)
+        .bind(remarks)
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
 }
 

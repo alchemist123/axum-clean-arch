@@ -12,5 +12,6 @@ pub trait TeamRepository: Send + Sync {
     async fn check_member(&self, request: &CheckMemberRequest) -> Result<CheckMemberResponse, String>;
     async fn count_teams(&self) -> Result<i64, String>;
     async fn member_exists_in_team(&self, email: &str, tms_id: &str) -> Result<bool, String>;
+    async fn update_team_status(&self, id: Uuid, status: String, remarks: Option<String>) -> Result<(), String>;
 }
 
