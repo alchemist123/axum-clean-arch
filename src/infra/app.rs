@@ -17,6 +17,7 @@ pub fn create_app(app_state: AppState) -> Router {
             "http://localhost:5173".parse().unwrap(),
             "http://127.0.0.1:3000".parse().unwrap(),
             "http://127.0.0.1:5173".parse().unwrap(),
+            "https://hackthon.binarybit.in".parse().unwrap(),
         ]))
         .allow_methods(AllowMethods::list([
             Method::GET,
@@ -30,6 +31,9 @@ pub fn create_app(app_state: AppState) -> Router {
             AUTHORIZATION,
             CONTENT_TYPE,
             ACCEPT,
+            http::header::ORIGIN,
+            http::header::REFERER,
+            http::header::USER_AGENT,
         ]))
         .allow_credentials(true);
 
