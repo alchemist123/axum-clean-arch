@@ -3,7 +3,7 @@ use axum::{
     http::{StatusCode, HeaderMap},
     middleware::{self, Next},
     response::{IntoResponse, Json},
-    routing::post,
+    routing::{post, delete},
     Router,
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -27,6 +27,7 @@ pub struct AdminStatusRequest {
 pub fn router() -> Router<AppState> {
     let protected_routes = Router::new()
         .route("/teams/{id}/status", post(update_team_status))
+        .route("/teams/{id}", delete(delete_team))
         .layer(middleware::from_fn(auth_middleware));
 
     Router::new()
@@ -50,6 +51,15 @@ async fn update_team_status(
 ) -> Result<StatusCode, AppError> {
     let usecase = AdminUseCase::new(app_state.team_repository.clone());
     usecase.update_team_status(id, request.status, request.remarks).await?;
+    Ok(StatusCode::OK)
+}
+
+async fn delete_team(
+    State(app_state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    let usecase = AdminUseCase::new(app_state.team_repository.clone());
+    usecase.delete_team(id).await?;
     Ok(StatusCode::OK)
 }
 

@@ -74,4 +74,12 @@ impl AdminUseCase {
             .await
             .map_err(|e| AppError::Database(e))
     }
+
+    pub async fn delete_team(&self, id: Uuid) -> Result<(), AppError> {
+        self.team_repository
+            .as_ref()
+            .delete_team(id)
+            .await
+            .map_err(|e| AppError::Database(e))
+    }
 }
