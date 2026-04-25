@@ -1,8 +1,12 @@
 use crate::{
     adapters::{
         http::app_state::AppState,
-        persistence::team_repository::PostgresTeamRepository,
+        persistence::{
+            productivity_repository::PostgresProductivityRepository,
+            team_repository::PostgresTeamRepository,
+        },
     },
+    domain::productivity_repository::ProductivityRepository,
     infra::{config::AppConfig, db::init_db},
 };
 use std::fs::{File, create_dir_all};
@@ -19,11 +23,14 @@ pub async fn init_app_state() -> anyhow::Result<Arc<AppState>>{
         .await
         .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
     
-    let team_repository: Arc<PostgresTeamRepository> = Arc::new(PostgresTeamRepository::new(pool));
+    let team_repository: Arc<PostgresTeamRepository> = Arc::new(PostgresTeamRepository::new(pool.clone()));
+    let productivity_repository: Arc<PostgresProductivityRepository> =
+        Arc::new(PostgresProductivityRepository::new(pool));
 
     Ok(Arc::new(AppState::new(
         Arc::new(config),
         team_repository as Arc<dyn crate::domain::repository::TeamRepository + Send + Sync>,
+        productivity_repository as Arc<dyn ProductivityRepository + Send + Sync>,
     )))
 }
 

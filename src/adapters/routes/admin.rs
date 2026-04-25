@@ -1,20 +1,18 @@
 use axum::{
-    extract::{Path, State, Request},
-    http::{StatusCode, HeaderMap},
-    middleware::{self, Next},
-    response::{IntoResponse, Json},
+    extract::{Path, State},
+    http::StatusCode,
+    middleware,
+    response::Json,
     routing::{post, delete},
     Router,
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use std::env;
 
 use crate::{
-    adapters::http::app_state::AppState,
+    adapters::http::{app_state::AppState, jwt_middleware::require_admin_jwt},
     app_error::AppError,
-    application::admin_usecase::{AdminUseCase, AdminLoginRequest, AdminLoginResponse, Claims},
+    application::admin_usecase::{AdminUseCase, AdminLoginRequest, AdminLoginResponse},
     domain::team::TeamStatus,
 };
 
@@ -28,7 +26,7 @@ pub fn router() -> Router<AppState> {
     let protected_routes = Router::new()
         .route("/teams/{id}/status", post(update_team_status))
         .route("/teams/{id}", delete(delete_team))
-        .layer(middleware::from_fn(auth_middleware));
+        .layer(middleware::from_fn(require_admin_jwt));
 
     Router::new()
         .route("/login", post(login))
@@ -61,31 +59,4 @@ async fn delete_team(
     let usecase = AdminUseCase::new(app_state.team_repository.clone());
     usecase.delete_team(id).await?;
     Ok(StatusCode::OK)
-}
-
-async fn auth_middleware(
-    headers: HeaderMap,
-    request: Request,
-    next: Next,
-) -> Result<impl IntoResponse, AppError> {
-    let auth_header = headers
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| AppError::InternalError("Missing authorization header".to_string()))?;
-
-    if !auth_header.starts_with("Bearer ") {
-        return Err(AppError::InternalError("Invalid authorization header".to_string()));
-    }
-
-    let token = &auth_header[7..];
-    let secret = env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
-
-    let _token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::default(),
-    )
-    .map_err(|e| AppError::InternalError(format!("Invalid token: {}", e)))?;
-
-    Ok(next.run(request).await)
 }

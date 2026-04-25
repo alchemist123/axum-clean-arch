@@ -17,7 +17,7 @@ pub fn create_app(app_state: AppState) -> Router {
             "http://localhost:5173".parse().unwrap(),
             "http://127.0.0.1:3000".parse().unwrap(),
             "http://127.0.0.1:5173".parse().unwrap(),
-            "https://hackthon.binarybit.in".parse().unwrap(),
+            "https://hackthon..in".parse().unwrap(),
         ]))
         .allow_methods(AllowMethods::list([
             Method::GET,

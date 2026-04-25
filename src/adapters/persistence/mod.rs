@@ -1,4 +1,5 @@
 pub mod team_repository;
+pub mod productivity_repository;
 
 use sqlx::PgPool;
 
