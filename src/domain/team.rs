@@ -45,9 +45,9 @@ pub struct Team {
     pub id: Option<Uuid>,
     #[validate(length(min = 1, max = 255, message = "Team name must be between 1 and 255 characters"))]
     pub team_name: String,
-    #[validate(length(max = 500, message = "Idea description must be at most 500 characters"))]
+    #[validate(length(min = 10, max = 2000, message = "Description must be between 10 and 2000 characters"))]
     pub idea_description: String,
-    #[validate(length(max = 500, message = "Impact description must be at most 500 characters"))]
+    #[validate(length(min = 10, max = 2000, message = "Impact statement must be between 10 and 2000 characters"))]
     pub impact_description: String,
     pub status: TeamStatus,
     pub admin_remarks: Option<String>,

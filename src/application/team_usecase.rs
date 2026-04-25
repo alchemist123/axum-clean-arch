@@ -31,16 +31,16 @@ impl TeamUseCase {
         }
 
         // Validate idea description length
-        if request.idea_description.len() > 500 {
+        if request.idea_description.len() > 2000 {
             return Err(AppError::ValidationError(
-                "Idea description must be at most 500 characters".to_string(),
+                "Description cannot exceed 2000 characters".to_string(),
             ));
         }
 
         // Validate impact description length
-        if request.impact_description.len() > 500 {
+        if request.impact_description.len() > 2000 {
             return Err(AppError::ValidationError(
-                "Impact description must be at most 500 characters".to_string(),
+                "Impact statement cannot exceed 2000 characters".to_string(),
             ));
         }
 
